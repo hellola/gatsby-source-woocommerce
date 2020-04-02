@@ -546,7 +546,7 @@ module.exports = {
   mapMediaToNodes,
   mapProductsToCategories,
   mapProductsToTags,
-  mapRelatedProducts,
+  // mapRelatedProducts,
   mapGroupedProducts,
   asyncGetProductVariations,
   asyncGetProductAttributes,
