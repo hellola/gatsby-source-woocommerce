@@ -6,7 +6,6 @@ const {
   mapMediaToNodes,
   mapProductsToCategories,
   mapProductsToTags,
-  mapRelatedProducts,
   mapGroupedProducts,
   asyncGetProductVariations,
   asyncGetProductAttributes,
@@ -131,7 +130,6 @@ exports.sourceNodes = async (
 
     nodes = mapProductsToCategories(nodes);
     nodes = mapProductsToTags(nodes);
-    nodes = mapRelatedProducts(nodes);
     nodes = mapGroupedProducts(nodes);
     nodes = mapNodeNormalizeMetadata(nodes);
 
