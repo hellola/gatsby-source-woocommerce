@@ -30,6 +30,7 @@ exports.sourceNodes = async (
     api_keys,
     fields,
     api_version = "wc/v3",
+    siteName = "",
     per_page,
     wpAPIPrefix = null,
     query_string_auth = false,
@@ -101,6 +102,7 @@ exports.sourceNodes = async (
       }
       tempNodes = tempNodes.map((node) => ({
         ...node,
+        site_name: siteName,
         id: createNodeId(
           `woocommerce-${fieldName}-${getWCNodeId(node, fieldName)}`
         ),
@@ -144,9 +146,9 @@ exports.sourceNodes = async (
       timeStampedLog(
         `gatsby-source-woocommerce: ${
           nodes.length
-        } nodes mapped, processed, and created in ${(new Date().getTime() -
-          startTime) /
-          1000}s`
+        } nodes mapped, processed, and created in ${
+          (new Date().getTime() - startTime) / 1000
+        }s`
       );
     }
   }
