@@ -25,14 +25,10 @@ exports.sourceNodes = async (
   delete configOptions.plugins;
 
   const {
-    api,
-    https,
-    api_keys,
-    fields,
-    api_version = "wc/v3",
-    siteName = "",
+    sites,
     per_page,
     wpAPIPrefix = null,
+    fields,
     query_string_auth = false,
     port = "",
     encoding = "",
@@ -40,28 +36,41 @@ exports.sourceNodes = async (
     verbose = true,
   } = configOptions;
 
+  const wooApis = {};
   // set up WooCommerce node api tool
-  const WooCommerce = new WooCommerceRestApi({
-    url: `http${https ? "s" : ""}://${api}`,
-    consumerKey: api_keys.consumer_key,
-    consumerSecret: api_keys.consumer_secret,
-    version: api_version,
-    wpAPIPrefix,
-    queryStringAuth: query_string_auth,
-    port,
-    encoding,
-    axiosConfig: axios_config,
-  });
+  const WooCommerce = (site) => {
+    const { api, https, api_keys, siteName, api_version = "wc/v3" } = site;
+
+    if (wooApis[siteName]) {
+      return wooApis[siteName];
+    }
+
+    const wooApi = new WooCommerceRestApi({
+      url: `http${https ? "s" : ""}://${api}`,
+      consumerKey: api_keys.consumer_key,
+      consumerSecret: api_keys.consumer_secret,
+      version: api_version,
+      wpAPIPrefix,
+      queryStringAuth: query_string_auth,
+      port,
+      encoding,
+      axiosConfig: axios_config,
+    });
+    wooApis[siteName] = wooApi;
+    return wooApi;
+  };
 
   // Fetch Node data for a given field name
-  const fetchNodes = async (fieldName) => {
+  const fetchNodes = async (fieldName, site) => {
     let data_ = [];
     let page = 1;
     let pages;
 
     do {
       let args = per_page ? { per_page, page } : { page };
-      await WooCommerce.get(fieldName, args)
+      const wooApi = WooCommerce(site);
+      await wooApi
+        .get(fieldName, args)
         .then((response) => {
           if (response.status === 200) {
             data_ = [...data_, ...response.data];
@@ -90,11 +99,16 @@ exports.sourceNodes = async (
   };
 
   // Loop over each field set in configOptions and process/create nodes
-  async function fetchNodesAndCreate(array) {
+  async function fetchNodesAndCreate(array, site) {
+    timeStampedLog(
+      `gatsby-source-woocommerce: loading fields: ${JSON.stringify(array)}`
+    );
+    const { siteName = "" } = site;
+
     let nodes = [];
     for (const field of array) {
       const fieldName = normaliseFieldName(field);
-      let tempNodes = await fetchNodes(field);
+      let tempNodes = await fetchNodes(field, site);
       if (verbose) {
         timeStampedLog(
           `gatsby-source-woocommerce: Fetching ${tempNodes.length} nodes for field: ${field}`
@@ -117,8 +131,8 @@ exports.sourceNodes = async (
         );
       }
     }
-    nodes = await asyncGetProductVariations(nodes, WooCommerce, verbose);
-    nodes = await asyncGetProductAttributes(nodes, WooCommerce, verbose);
+    nodes = await asyncGetProductVariations(nodes, WooCommerce(site), verbose);
+    nodes = await asyncGetProductAttributes(nodes, WooCommerce(site), verbose);
     nodes = await mapMediaToNodes({
       nodes,
       store,
@@ -153,7 +167,9 @@ exports.sourceNodes = async (
     }
   }
 
-  await fetchNodesAndCreate(fields);
+  for (site of sites) {
+    await fetchNodesAndCreate(fields, site);
+  }
   return;
 };
 
