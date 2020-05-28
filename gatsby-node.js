@@ -100,10 +100,10 @@ exports.sourceNodes = async (
 
   // Loop over each field set in configOptions and process/create nodes
   async function fetchNodesAndCreate(array, site) {
-    timeStampedLog(
-      `gatsby-source-woocommerce: loading fields: ${JSON.stringify(array)}`
-    );
     const { siteName = "" } = site;
+    timeStampedLog(
+      `gatsby-source-woocommerce: loading fields (site: ${siteName}): ${JSON.stringify(array)}`
+    );
 
     let nodes = [];
     for (const field of array) {
@@ -118,7 +118,7 @@ exports.sourceNodes = async (
         ...node,
         site_name: siteName,
         id: createNodeId(
-          `woocommerce-${fieldName}-${getWCNodeId(node, fieldName)}`
+          `woocommerce-${siteName}-${fieldName}-${getWCNodeId(node, fieldName)}`
         ),
         wordpress_id: getWCNodeId(node, fieldName),
         wordpress_parent_id: node.parent,
